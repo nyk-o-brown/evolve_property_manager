@@ -28,7 +28,7 @@ export default function App() {
     <Router>
       <Routes>
         {/* Auth routes */}
-        <Route path="/" element={<Navigate to="/dashboard" />} />
+        <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 

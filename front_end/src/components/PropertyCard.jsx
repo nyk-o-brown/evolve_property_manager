@@ -10,7 +10,7 @@ export default function PropertyCard({ property }) {
         className="w-full h-40 object-cover rounded-md"
       />
       <h2 className="text-lg font-bold mt-2">{property.title}</h2>
-      <p className="text-sm text-gray-600">{property.location}</p>
+      <p className="text-sm text-gra`1y-600">{property.location}</p>
       <p className="text-blue-600 font-semibold">${property.price}</p>
       <Link
         to={`/properties/${property.id}`}
