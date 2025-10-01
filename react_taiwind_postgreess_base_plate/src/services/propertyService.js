@@ -44,3 +44,62 @@ export const deleteProperty = async (id) => {
   mockProperties.splice(index, 1);
   return true;
 };
+
+
+
+
+
+// src/services/propertyService.js
+const API_URL = 'http://localhost/react_taiwind_postgreess_base_plate/backend/api';
+
+export const propertyService = {
+    async getAllProperties() {
+        const response = await fetch(`${API_URL}/properties/read.php`);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    },
+
+    async createProperty(propertyData) {
+        const response = await fetch(`${API_URL}/properties/create.php`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(propertyData),
+        });
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    },
+
+    async updateProperty(id, propertyData) {
+        const response = await fetch(`${API_URL}/properties/update.php`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id, ...propertyData }),
+        });
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    },
+
+    async deleteProperty(id) {
+        const response = await fetch(`${API_URL}/properties/delete.php`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id }),
+        });
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    },
+};
