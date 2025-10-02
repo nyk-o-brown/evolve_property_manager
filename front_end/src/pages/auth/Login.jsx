@@ -121,7 +121,7 @@ const Login = () => {
           </div>
 
           {/* Demo Credentials Banner */}
-          <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          {/* <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-blue-700 text-sm text-center">
               <strong>Demo:</strong> Use any email/password or{" "}
               <button
@@ -132,7 +132,7 @@ const Login = () => {
                 click here to fill demo credentials
               </button>
             </p>
-          </div>
+          </div> */}
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
