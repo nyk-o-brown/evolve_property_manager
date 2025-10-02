@@ -107,7 +107,7 @@ const Login = () => {
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
         <div className="p-8">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
@@ -119,20 +119,6 @@ const Login = () => {
               Sign in to your account to continue
             </p>
           </div>
-
-          {/* Demo Credentials Banner */}
-          {/* <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-blue-700 text-sm text-center">
-              <strong>Demo:</strong> Use any email/password or{" "}
-              <button
-                type="button"
-                onClick={fillDemoCredentials}
-                className="text-blue-600 font-medium hover:text-blue-700 underline"
-              >
-                click here to fill demo credentials
-              </button>
-            </p>
-          </div> */}
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
@@ -161,7 +147,7 @@ const Login = () => {
                 name="password"
                 type="password"
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all duration-200"
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange}
@@ -201,7 +187,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+              className="w-full bg-gray-800 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
@@ -244,7 +230,7 @@ const Login = () => {
               Don't have an account?{" "}
               <Link 
                 to="/register" 
-                className="text-blue-600 font-medium hover:text-blue-700 hover:underline transition-colors duration-200"
+                className="text-gray-900 font-medium hover:text-blue-700 hover:underline transition-colors duration-200"
               >
                 Create an account
               </Link>
