@@ -1,25 +1,24 @@
 <?php
-// backend/config/Database.php
-<?php
+
 class Database {
     private $host = "localhost";
-    private $database_name = "property_app";
+    private $database_name = "property_manager";
+    private $port ="3306";
     private $username = "root";
-    private $password = "";
-    public $conn;
-
+    private $password = "##&&oracleNyakako7050#";
+    
     public function getConnection() {
-        $this->conn = null;
         try {
-            $this->conn = new PDO(
-                "mysql:host=" . $this->host . ";dbname=" . $this->database_name, 
-                $this->username, 
+            $conn = new PDO(
+                "mysql:host=" . $this->host . ";dbname=" . $this->database_name,
+                $this->username,
                 $this->password
             );
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            return $conn;
         } catch(PDOException $e) {
-            echo "Connection failed: " . $e->getMessage();
+            error_log("Connection error: " . $e->getMessage());
+            throw $e;
         }
-        return $this->conn;
     }
 }

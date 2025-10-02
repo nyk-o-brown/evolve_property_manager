@@ -1,6 +1,6 @@
 <?php
 // backend/models/Property.php
-<?php
+
 class Property {
     private $conn;
     private $table_name = "properties";
