@@ -116,13 +116,14 @@ export default function PropertyList() {
 //        </div>
 //      )}
 //    </div>
-//  );
 //}
 
 
 // src/pages/properties/PropertyList.jsx
 import { useState, useEffect } from 'react';
 import { propertyService } from '../../services/propertyService';
+import PropertyCard from '../../components/PropertyCard';
+import { Link } from 'react-router-dom';
 
 export default function PropertyList() {
     const [properties, setProperties] = useState([]);
@@ -130,28 +131,56 @@ export default function PropertyList() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
+        async function loadProperties() {
+            try {
+                console.log('Fetching properties...'); // Debug log
+                const data = await propertyService.getAllProperties();
+                console.log('Properties received:', data); // Debug log
+                setProperties(data);
+            } catch (err) {
+                console.error('Fetch error:', err);
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
         loadProperties();
     }, []);
 
-    async function loadProperties() {
-        try {
-            const data = await propertyService.getAllProperties();
-            setProperties(data);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    }
+    if (loading) return (
+        <div className="flex justify-center items-center h-screen">
+            <div className="text-lg">Loading properties...</div>
+        </div>
+    );
 
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error}</div>;
+    if (error) return (
+        <div className="p-4 text-red-500 bg-red-50 rounded-md m-4">
+            <h2 className="font-bold">Error Loading Properties</h2>
+            <p>{error}</p>
+        </div>
+    );
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {properties.map(property => (
-                <PropertyCard key={property.id} property={property} />
-            ))}
+        <div className="p-6">
+            <div className="flex justify-between items-center mb-4">
+                <h1 className="text-2xl font-bold">Property Listings</h1>
+                <Link
+                    to="/properties/new"
+                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+                >
+                    + Add Property
+                </Link>
+            </div>
+
+            {properties.length === 0 ? (
+                <p className="text-gray-500">No properties found.</p>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {properties.map((property) => (
+                        <PropertyCard key={property.id} property={property} />
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

@@ -50,15 +50,22 @@ export const deleteProperty = async (id) => {
 
 
 // src/services/propertyService.js
-const API_URL = 'http://localhost/react_taiwind_postgreess_base_plate/backend/api';
+const API_URL = 'http://localhost/evolve_property_manager/react_taiwind_postgreess_base_plate/backend/api';
 
 export const propertyService = {
     async getAllProperties() {
-        const response = await fetch(`${API_URL}/properties/read.php`);
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
+        try {
+            console.log('Fetching from:', `${API_URL}/properties/read.php`);
+            const response = await fetch(`${API_URL}/properties/read.php`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Fetch error:', error);
+            throw error;
         }
-        return response.json();
     },
 
     async createProperty(propertyData) {
