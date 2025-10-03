@@ -13,10 +13,10 @@ export default function PropertyCard({ property }) {
       <p className="text-sm text-gray-600">{property.location}</p>
       <p className="text-blue-600 font-semibold">${property.price}</p>
       <Link
-        to={`/properties/${property.id}`}
-        className="text-indigo-500 hover:underline text-sm mt-2 block"
-      >
-        View Details →
+        to={`/properties/${property.id}/units`}
+        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+>
+        View Units
       </Link>
     </div>
   );

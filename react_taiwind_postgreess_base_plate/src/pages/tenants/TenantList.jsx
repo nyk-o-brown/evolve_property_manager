@@ -7,7 +7,7 @@ const dummyTenants = [
   {
     id: "t1",
     name: "John Doe",
-    property: "123 Main St",
+    House_Number: "7h",
     email: "john.doe@example.com",
     phone: "123-456-7890",
     status: "Active",
@@ -16,7 +16,7 @@ const dummyTenants = [
   {
     id: "t2",
     name: "Jane Smith",
-    property: "456 Oak Ave",
+    House_Number: "9j",
     email: "jane.smith@example.com",
     phone: "098-765-4321",
     status: "Active",
@@ -25,7 +25,7 @@ const dummyTenants = [
   {
     id: "t3",
     name: "Peter Jones",
-    property: "789 Pine Rd",
+    House_Number: "7d",
     email: "peter.jones@example.com",
     phone: "555-123-4567",
     status: "Pending",
@@ -61,7 +61,7 @@ export default function TenantsList({ theme = "light" }) {
             <thead>
               <tr className="text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                 <th className="px-6 py-3">Tenant Name</th>
-                <th className="px-6 py-3">Property</th>
+                <th className="px-6 py-3">House_Number</th>
                 <th className="px-6 py-3">Status</th>
                 <th className="px-6 py-3">Lease End</th>
                 <th className="px-6 py-3">Actions</th>

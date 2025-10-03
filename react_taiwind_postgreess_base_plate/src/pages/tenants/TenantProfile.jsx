@@ -6,7 +6,7 @@ const dummyTenants = [
   {
     id: "t1",
     name: "John Doe",
-    property: "123 Main St",
+    House_Number: "7h",
     email: "john.doe@example.com",
     phone: "123-456-7890",
     status: "Active",
@@ -18,7 +18,7 @@ const dummyTenants = [
   {
     id: "t2",
     name: "Jane Smith",
-    property: "456 Oak Ave",
+    House_Number: "9j",
     email: "jane.smith@example.com",
     phone: "098-765-4321",
     status: "Active",
@@ -30,7 +30,7 @@ const dummyTenants = [
   {
     id: "t3",
     name: "Peter Jones",
-    property: "789 Pine Rd",
+    House_Number: "7d",
     email: "peter.jones@example.com",
     phone: "555-123-4567",
     status: "Pending",
