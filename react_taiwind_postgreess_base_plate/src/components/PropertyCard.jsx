@@ -14,8 +14,8 @@ export default function PropertyCard({ property }) {
       <p className="text-blue-600 font-semibold">${property.price}</p>
       <Link
         to={`/properties/${property.id}/units`}
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
->
+        className="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+      >
         View Units
       </Link>
     </div>
