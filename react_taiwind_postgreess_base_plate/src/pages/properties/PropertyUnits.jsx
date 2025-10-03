@@ -2,29 +2,25 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
-const API_URL = 'http://localhost/evolve_property_manager/react_taiwind_postgreess_base_plate/backend/api';
+const API_URL = 'http://localhost/evolve_property_manager/react_taiwind_postgreess_base_plate/backend/api/properties';
 
 export default function PropertyUnits() {
     const [units, setUnits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { id } = useParams(); // This gets the :id from the URL
+    const { id } = useParams(); // Gets :id from URL
 
     useEffect(() => {
         const fetchUnits = async () => {
             try {
-                console.log('Fetching units for property:', id); // Debug log
-                const response = await fetch(`${API_URL}/properties/get_units.php?id=${id}`);
+                const response = await fetch(`${API_URL}/get_units.php?id=${id}`);
                 const data = await response.json();
-                console.log('Received data:', data); // Debug log
-                
                 if (data.status === 'success') {
                     setUnits(data.units);
                 } else {
                     throw new Error(data.message || 'Failed to fetch units');
                 }
             } catch (err) {
-                console.error('Error:', err);
                 setError(err.message);
             } finally {
                 setLoading(false);
@@ -34,55 +30,57 @@ export default function PropertyUnits() {
         fetchUnits();
     }, [id]);
 
-    if (loading) {
-        return <div className="p-4">Loading property units...</div>;
-    }
-
-    if (error) {
-        return <div className="p-4 text-red-500">Error: {error}</div>;
-    }
+    if (loading) return <div className="p-4">Loading property units...</div>;
+    if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
 
     return (
         <div className="p-6">
             <h1 className="text-2xl font-bold mb-6">Property Units</h1>
             {units.length === 0 ? (
-                <p>No units found for this property.</p>
+                <div className="text-center py-8">
+                    <p className="text-gray-600 text-lg">No units found for this property.</p>
+                </div>
             ) : (
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {units.map((unit) => (
-                        <div 
-                            key={unit.id} 
-                            className="bg-white p-4 rounded-lg shadow"
+                        <div
+                            key={unit.id}
+                            className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-200"
                         >
-                            <div className="flex justify-between items-center">
-                                <h3 className="text-lg font-semibold">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-xl font-semibold text-gray-800">
                                     Unit {unit.unit_number}
                                 </h3>
-                                <span className={`px-2 py-1 rounded-full text-sm ${
-                                    unit.status === 'occupied' 
-                                        ? 'bg-green-100 text-green-800' 
-                                        : 'bg-gray-100 text-gray-800'
+                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                    unit.status === 'occupied'
+                                        ? 'bg-red-100 text-red-800'
+                                        : 'bg-green-100 text-green-800'
                                 }`}>
-                                    {unit.status}
+                                    {unit.status.charAt(0).toUpperCase() + unit.status.slice(1)}
                                 </span>
                             </div>
-                            <div className="mt-2">
+                            <div className="space-y-2">
                                 <p className="text-gray-600">
-                                    Rent: ${unit.rent_price}
+                                    <span className="font-medium">Rent:</span> ${unit.rent_price}/month
                                 </p>
                                 <p className="text-gray-600">
-                                    Tenant: {unit.tenant_name || 'Vacant'}
+                                    <span className="font-medium">Tenant:</span> {unit.tenant_name || 'Vacant'}
                                 </p>
-                                {unit.maintenance_status !== 'none' && (
-                                    <p className={`mt-2 ${
-                                        unit.maintenance_status === 'pending' 
-                                            ? 'text-yellow-600' 
-                                            : 'text-blue-600'
-                                    }`}>
-                                        Maintenance: {unit.maintenance_status}
-                                    </p>
-                                )}
+                                <p className={`text-gray-600 ${
+                                    unit.maintenance_status === 'pending'
+                                        ? 'text-yellow-600'
+                                        : unit.maintenance_status === 'in_progress'
+                                            ? 'text-blue-600'
+                                            : ''
+                                }`}>
+                                    <span className="font-medium">Maintenance:</span> {unit.maintenance_status}
+                                </p>
                             </div>
+                            {unit.status === 'vacant' && (
+                                <button className="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors duration-200">
+                                    List Unit
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -90,3 +88,5 @@ export default function PropertyUnits() {
         </div>
     );
 }
+
+
