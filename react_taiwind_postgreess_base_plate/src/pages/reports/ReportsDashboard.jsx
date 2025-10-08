@@ -11,13 +11,13 @@ import CostBreakdownChart from "../../components/layout/CostBreakdownChart";
 
 // Data for the bar chart
 const data = [
-  { name: "Mon", value: 3000 },
-  { name: "Tue", value: 3200 },
-  { name: "Wed", value: 3100 },
-  { name: "Thu", value: 4090 },
-  { name: "Fri", value: 3200 },
-  { name: "Sat", value: 3200 },
-  { name: "Sun", value: 3200 },
+  { name: "Jan", value: 3000 },
+  { name: "Feb", value: 3200 },
+  { name: "Mar", value: 3100 },
+  { name: "Apr", value: 4090 },
+  { name: "May", value: 3200 },
+  { name: "Jun", value: 3200 },
+  { name: "Jul", value: 3200 },
 ];
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -28,7 +28,7 @@ const CustomTooltip = ({ active, payload, label }) => {
           <div className="w-2 h-2 rounded-full bg-green-500"></div>
           <span>${payload[0].value.toLocaleString()}</span>
         </div>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">{label}, 12 Jul</p>
+        <p className="text-gray-500 dark:text-gray-400 mt-1">{label}, Q1</p>
       </div>
     );
   }
@@ -55,7 +55,7 @@ export default function ReportsDashboard({ theme = "light" }) {
             <h2 className="text-xl font-semibold">Report Sales</h2>
             <div className="flex items-center space-x-2 p-2 rounded-lg cursor-pointer bg-gray-100 dark:bg-gray-700">
               <Calendar size={18} />
-              <span className="text-sm">Weekday</span>
+              <span className="text-sm">Quarterly</span>
             </div>
           </div>
           <div className="h-64">

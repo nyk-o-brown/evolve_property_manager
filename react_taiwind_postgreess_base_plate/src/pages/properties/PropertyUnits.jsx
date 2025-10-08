@@ -1,16 +1,19 @@
-// src/pages/properties/PropertyUnits.jsx
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-const API_URL = 'http://localhost/evolve_property_manager/react_taiwind_postgreess_base_plate/backend/api/properties';
-
 export default function PropertyUnits() {
+    const { id } = useParams();
     const [units, setUnits] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { id } = useParams(); // Gets :id from URL
 
     useEffect(() => {
+        if (!id || id === 'undefined') {
+            setError('Invalid property id in URL.');
+            setLoading(false);
+            return;
+        }
+
         const fetchUnits = async () => {
             try {
                 const response = await fetch(`${API_URL}/get_units.php?id=${id}`);
@@ -49,14 +52,16 @@ export default function PropertyUnits() {
                         >
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-xl font-semibold text-gray-800">
-                                    Unit {unit.unit_number}
+                                    {unit.unit_name}
                                 </h3>
                                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                    unit.status === 'occupied'
+                                    unit.tenant_status === 'occupied'
                                         ? 'bg-red-100 text-red-800'
-                                        : 'bg-green-100 text-green-800'
+                                        : unit.tenant_status === 'pending'
+                                            ? 'bg-yellow-100 text-yellow-800'
+                                            : 'bg-green-100 text-green-800'
                                 }`}>
-                                    {unit.status.charAt(0).toUpperCase() + unit.status.slice(1)}
+                                    {unit.tenant_status.charAt(0).toUpperCase() + unit.tenant_status.slice(1)}
                                 </span>
                             </div>
                             <div className="space-y-2">
@@ -64,19 +69,10 @@ export default function PropertyUnits() {
                                     <span className="font-medium">Rent:</span> ${unit.rent_price}/month
                                 </p>
                                 <p className="text-gray-600">
-                                    <span className="font-medium">Tenant:</span> {unit.tenant_name || 'Vacant'}
-                                </p>
-                                <p className={`text-gray-600 ${
-                                    unit.maintenance_status === 'pending'
-                                        ? 'text-yellow-600'
-                                        : unit.maintenance_status === 'in_progress'
-                                            ? 'text-blue-600'
-                                            : ''
-                                }`}>
-                                    <span className="font-medium">Maintenance:</span> {unit.maintenance_status}
+                                    <span className="font-medium">User:</span> {unit.user_name}
                                 </p>
                             </div>
-                            {unit.status === 'vacant' && (
+                            {unit.tenant_status === 'unoccupied' && (
                                 <button className="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors duration-200">
                                     List Unit
                                 </button>
@@ -88,5 +84,3 @@ export default function PropertyUnits() {
         </div>
     );
 }
-
-
