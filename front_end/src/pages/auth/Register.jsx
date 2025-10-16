@@ -5,7 +5,11 @@ const Register = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: ""
+    password: "",
+    confirmPassword: "",
+    role: "tenant",
+    phone: "",
+    ...(role === "manager" && { companyName: "", licenseNumber: "" })
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -19,23 +23,42 @@ const Register = () => {
     setError("");
   };
 
-  // Mock register function
+  // Mock register function with role-based data and routing
   const mockRegister = async (userData) => {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Simulate successful registration
-    const mockUser = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: userData.name,
-      email: userData.email,
-      token: "mock-jwt-token-" + Math.random().toString(36).substr(2, 9)
+    // Role-based mock data with proper routing
+    const roleData = {
+      tenant: {
+        id: Math.random().toString(36).substr(2, 9),
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone,
+        role: "tenant",
+        dashboardPath: "/tenant-dashboard",
+        unitNumber: Math.floor(Math.random() * 500) + 100,
+        avatar: userData.name.split(' ').map(n => n[0]).join('')
+      },
+      manager: {
+        id: Math.random().toString(36).substr(2, 9),
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone,
+        role: "manager",
+        dashboardPath: "/manager-dashboard",
+        company: userData.companyName || "My Property Company",
+        licenseNumber: userData.licenseNumber || "LIC-" + Math.random().toString(36).substr(2, 6).toUpperCase(),
+        avatar: userData.name.split(' ').map(n => n[0]).join('')
+      }
     };
+
+    const userProfile = roleData[userData.role] || roleData.tenant;
     
     return {
       success: true,
-      user: mockUser,
-      token: mockUser.token
+      user: userProfile,
+      token: "mock-jwt-token-" + Math.random().toString(36).substr(2, 9)
     };
   };
 
@@ -44,10 +67,11 @@ const Register = () => {
     setError("");
     setIsLoading(true);
 
-    const { name, email, password } = formData;
+    const { name, email, password, confirmPassword, role, phone } = formData;
 
-    if (!name || !email || !password) {
-      setError("Please fill in all fields.");
+    // Validation
+    if (!name || !email || !password || !confirmPassword || !phone) {
+      setError("Please fill in all required fields.");
       setIsLoading(false);
       return;
     }
@@ -58,25 +82,38 @@ const Register = () => {
       return;
     }
 
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      setIsLoading(false);
+      return;
+    }
+
     if (!email.includes('@')) {
       setError("Please enter a valid email address.");
       setIsLoading(false);
       return;
     }
 
-    try {
-      // Use mock function instead of real API call
-      const result = await mockRegister({ name, email, password });
+    if (phone.length < 10) {
+      setError("Please enter a valid phone number.");
+      setIsLoading(false);
+      return;
+    }
 
-      // Store mock token in localStorage
+    try {
+      // Use mock function with role
+      const result = await mockRegister({ ...formData, role });
+
+      // Store user data with role
       localStorage.setItem("token", result.token);
       localStorage.setItem("user", JSON.stringify(result.user));
+      localStorage.setItem("userRole", result.user.role);
 
-      console.log("Mock registration successful:", result.user);
+      console.log(`Registration successful:`, result.user);
       
-      // Redirect to dashboard after successful registration
+      // Redirect to role-specific dashboard
       setTimeout(() => {
-        navigate("/dashboard", { replace: true });
+        navigate(result.user.dashboardPath, { replace: true });
       }, 500);
 
     } catch (err) {
@@ -87,17 +124,57 @@ const Register = () => {
   };
 
   const handleGoogleSignup = () => {
-    // Mock Google signup - just redirect to dashboard after delay
+    // Mock Google signup with role
     setIsLoading(true);
     setTimeout(() => {
-      localStorage.setItem("token", "mock-google-token");
-      localStorage.setItem("user", JSON.stringify({
+      const userData = {
         id: "google-user",
-        name: "Google User",
-        email: "user@google.com"
-      }));
-      navigate("/dashboard", { replace: true });
+        name: formData.name || "Google User",
+        email: formData.email || "user@google.com",
+        phone: formData.phone || "+1234567890",
+        role: formData.role,
+        dashboardPath: formData.role === "manager" ? "/manager-dashboard" : "/tenant-dashboard",
+        ...(formData.role === "manager" ? 
+          { company: formData.companyName || "Google Properties" } : 
+          { unitNumber: "101" }
+        ),
+        avatar: (formData.name || "G U").split(' ').map(n => n[0]).join('')
+      };
+      
+      localStorage.setItem("token", "mock-google-token");
+      localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("userRole", formData.role);
+      
+      navigate(userData.dashboardPath, { replace: true });
     }, 1500);
+  };
+
+  // Demo data for form preview
+  const fillDemoData = (role = "tenant") => {
+    const demoData = {
+      tenant: {
+        name: "John Tenant",
+        email: "tenant@example.com",
+        phone: "+1234567890",
+        password: "tenant123",
+        confirmPassword: "tenant123"
+      },
+      manager: {
+        name: "Sarah Manager",
+        email: "manager@example.com",
+        phone: "+1987654321",
+        password: "manager123",
+        confirmPassword: "manager123",
+        companyName: "Premium Properties LLC",
+        licenseNumber: "LIC-ABC123"
+      }
+    };
+
+    setFormData({
+      ...formData,
+      ...demoData[role],
+      role: role
+    });
   };
 
   return (
@@ -118,10 +195,69 @@ const Register = () => {
             </p>
           </div>
 
-          <form onSubmit={handleRegister} className="space-y-6">
+          {/* Role Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              I want to register as a:
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({...formData, role: "tenant"});
+                  fillDemoData("tenant");
+                }}
+                className={`p-4 border-2 rounded-xl text-center transition-all duration-200 ${
+                  formData.role === "tenant" 
+                    ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm" 
+                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <div className="font-semibold">Tenant</div>
+                <div className="text-xs mt-1 opacity-75">Looking to rent</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({...formData, role: "manager"});
+                  fillDemoData("manager");
+                }}
+                className={`p-4 border-2 rounded-xl text-center transition-all duration-200 ${
+                  formData.role === "manager" 
+                    ? "border-green-500 bg-green-50 text-green-700 shadow-sm" 
+                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <div className="font-semibold">Manager</div>
+                <div className="text-xs mt-1 opacity-75">Managing properties</div>
+              </button>
+            </div>
+          </div>
+
+          {/* Role-specific information */}
+          <div className={`mb-6 p-4 rounded-xl ${
+            formData.role === "manager" 
+              ? "bg-green-50 border border-green-200" 
+              : "bg-blue-50 border border-blue-200"
+          }`}>
+            <h3 className={`font-semibold text-sm mb-2 ${
+              formData.role === "manager" ? "text-green-800" : "text-blue-800"
+            }`}>
+              {formData.role === "manager" ? "Property Manager Account" : "Tenant Account"}
+            </h3>
+            <p className={`text-xs ${
+              formData.role === "manager" ? "text-green-700" : "text-blue-700"
+            }`}>
+              {formData.role === "manager" 
+                ? "Manage properties, handle tenants, and process payments with your manager account." 
+                : "Find your perfect home, submit maintenance requests, and pay rent online."}
+            </p>
+          </div>
+
+          <form onSubmit={handleRegister} className="space-y-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name
+                Full Name *
               </label>
               <input
                 id="name"
@@ -138,7 +274,7 @@ const Register = () => {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email Address
+                Email Address *
               </label>
               <input
                 id="email"
@@ -154,8 +290,62 @@ const Register = () => {
             </div>
 
             <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                Phone Number *
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                placeholder="+1234567890"
+                value={formData.phone}
+                onChange={handleChange}
+                autoComplete="tel"
+              />
+            </div>
+
+            {/* Manager-specific fields */}
+            {formData.role === "manager" && (
+              <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-sm text-green-800 font-medium">
+                  Additional information for property managers:
+                </p>
+                <div>
+                  <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Company Name
+                  </label>
+                  <input
+                    id="companyName"
+                    name="companyName"
+                    type="text"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Your company name"
+                    value={formData.companyName}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="licenseNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                    License Number
+                  </label>
+                  <input
+                    id="licenseNumber"
+                    name="licenseNumber"
+                    type="text"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Real estate license number"
+                    value={formData.licenseNumber}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
+                Password *
               </label>
               <input
                 id="password"
@@ -169,6 +359,26 @@ const Register = () => {
                 autoComplete="new-password"
                 minLength="6"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Must be at least 6 characters long
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                Confirm Password *
+              </label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                placeholder="Confirm your password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                autoComplete="new-password"
+              />
             </div>
 
             {error && (
@@ -180,15 +390,19 @@ const Register = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gray-800 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+              className={`w-full text-white py-3 px-4 rounded-lg font-semibold focus:ring-2 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md ${
+                formData.role === "manager" 
+                  ? "bg-green-600 hover:bg-green-700 focus:ring-green-500" 
+                  : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+              }`}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
                   <div className="w-5 h-5 border-t-2 border-white border-solid rounded-full animate-spin mr-2"></div>
-                  Creating Account...
+                  Creating {formData.role} account...
                 </div>
               ) : (
-                "Create Account"
+                `Create ${formData.role === "manager" ? "Property Manager" : "Tenant"} Account`
               )}
             </button>
           </form>
@@ -228,6 +442,17 @@ const Register = () => {
                 Sign in
               </Link>
             </p>
+          </div>
+
+          {/* Demo Helper */}
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => fillDemoData(formData.role)}
+              className="text-sm text-gray-500 hover:text-gray-700 underline"
+            >
+              Fill demo {formData.role} data
+            </button>
           </div>
         </div>
       </div>

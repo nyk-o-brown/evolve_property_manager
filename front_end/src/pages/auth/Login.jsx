@@ -4,7 +4,8 @@ import { useNavigate, Link } from "react-router-dom";
 const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
-    password: ""
+    password: "",
+    role: "tenant" // Default role
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -19,23 +20,39 @@ const Login = () => {
     setError("");
   };
 
-  // Mock login function
-  const mockLogin = async (email, password) => {
+  // Mock login function with role-based routing
+  const mockLogin = async (email, password, role) => {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    // Simulate successful login
-    const mockUser = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: "Demo User",
-      email: email,
-      token: "mock-jwt-token-" + Math.random().toString(36).substr(2, 9)
+    // Role-based mock data with proper routing
+    const roleData = {
+      tenant: {
+        id: Math.random().toString(36).substr(2, 9),
+        name: "John Tenant",
+        email: email,
+        role: "tenant",
+        dashboardPath: "/tenant-dashboard",
+        unitNumber: "304",
+        avatar: "JT"
+      },
+      manager: {
+        id: Math.random().toString(36).substr(2, 9),
+        name: "Sarah Manager",
+        email: email,
+        role: "manager",
+        dashboardPath: "/manager-dashboard",
+        company: "Premium Properties",
+        avatar: "SM"
+      }
     };
+
+    const userData = roleData[role] || roleData.tenant;
     
     return {
       success: true,
-      user: mockUser,
-      token: mockUser.token
+      user: userData,
+      token: "mock-jwt-token-" + Math.random().toString(36).substr(2, 9)
     };
   };
 
@@ -44,7 +61,7 @@ const Login = () => {
     setError("");
     setIsLoading(true);
 
-    const { email, password } = formData;
+    const { email, password, role } = formData;
 
     if (!email || !password) {
       setError("Please fill in all fields.");
@@ -59,18 +76,19 @@ const Login = () => {
     }
 
     try {
-      // Use mock function instead of real API call
-      const result = await mockLogin(email, password);
+      // Use mock function with role
+      const result = await mockLogin(email, password, role);
 
-      // Store mock token and user data
+      // Store user data with role
       localStorage.setItem("token", result.token);
       localStorage.setItem("user", JSON.stringify(result.user));
+      localStorage.setItem("userRole", result.user.role);
 
-      console.log("Mock login successful:", result.user);
+      console.log(`Login successful:`, result.user);
       
-      // Redirect to dashboard after successful login
+      // Redirect to role-specific dashboard
       setTimeout(() => {
-        navigate("/dashboard", { replace: true });
+        navigate(result.user.dashboardPath, { replace: true });
       }, 500);
 
     } catch (err) {
@@ -81,24 +99,43 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
-    // Mock Google login - just redirect to dashboard after delay
+    // Mock Google login with role
     setIsLoading(true);
     setTimeout(() => {
-      localStorage.setItem("token", "mock-google-token");
-      localStorage.setItem("user", JSON.stringify({
+      const userData = {
         id: "google-user",
         name: "Google User",
-        email: "user@google.com"
-      }));
-      navigate("/dashboard", { replace: true });
+        email: formData.email || "user@google.com",
+        role: formData.role,
+        dashboardPath: formData.role === "manager" ? "/manager-dashboard" : "/tenant-dashboard",
+        ...(formData.role === "manager" ? { company: "Google Properties" } : { unitNumber: "101" })
+      };
+      
+      localStorage.setItem("token", "mock-google-token");
+      localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("userRole", formData.role);
+      
+      navigate(userData.dashboardPath, { replace: true });
     }, 1500);
   };
 
   // Demo credentials helper
-  const fillDemoCredentials = () => {
+  const fillDemoCredentials = (role = "tenant") => {
+    const demoData = {
+      tenant: {
+        email: "tenant@example.com",
+        password: "tenant123"
+      },
+      manager: {
+        email: "manager@example.com",
+        password: "manager123"
+      }
+    };
+
     setFormData({
-      email: "demo@example.com",
-      password: "demopassword"
+      ...formData,
+      ...demoData[role],
+      role: role
     });
   };
 
@@ -117,6 +154,54 @@ const Login = () => {
             </h1>
             <p className="text-gray-600">
               Sign in to your account to continue
+            </p>
+          </div>
+
+          {/* Role Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              I am a:
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({...formData, role: "tenant"});
+                  fillDemoCredentials("tenant");
+                }}
+                className={`p-4 border-2 rounded-xl text-center transition-all duration-200 ${
+                  formData.role === "tenant" 
+                    ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm" 
+                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <div className="font-semibold">Tenant</div>
+                <div className="text-xs mt-1 opacity-75">Renting a property</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({...formData, role: "manager"});
+                  fillDemoCredentials("manager");
+                }}
+                className={`p-4 border-2 rounded-xl text-center transition-all duration-200 ${
+                  formData.role === "manager" 
+                    ? "border-green-500 bg-green-50 text-green-700 shadow-sm" 
+                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <div className="font-semibold">Manager</div>
+                <div className="text-xs mt-1 opacity-75">Managing properties</div>
+              </button>
+            </div>
+          </div>
+
+          {/* Demo Credentials Banner */}
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+            <p className="text-blue-700 text-sm text-center">
+              <strong>Demo {formData.role === "tenant" ? "Tenant" : "Manager"} Credentials</strong><br />
+              Email: <span className="font-mono text-xs">{formData.email}</span><br />
+              Password: <span className="font-mono text-xs">{formData.role === "tenant" ? "tenant123" : "manager123"}</span>
             </p>
           </div>
 
@@ -187,15 +272,19 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gray-800 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+              className={`w-full text-white py-3 px-4 rounded-lg font-semibold focus:ring-2 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md ${
+                formData.role === "manager" 
+                  ? "bg-green-600 hover:bg-green-700 focus:ring-green-500" 
+                  : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+              }`}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
                   <div className="w-5 h-5 border-t-2 border-white border-solid rounded-full animate-spin mr-2"></div>
-                  Signing in...
+                  Signing in as {formData.role}...
                 </div>
               ) : (
-                "Sign in to your account"
+                `Sign in as ${formData.role === "manager" ? "Property Manager" : "Tenant"}`
               )}
             </button>
           </form>
