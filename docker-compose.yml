@@ -1,8 +1,8 @@
-version: '3.8'
-
 services:
   app:
-    image: php:8.2-fpm
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: evolve_php
     working_dir: /var/www/html
     volumes:
@@ -47,6 +47,22 @@ services:
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html
+    networks:
+      - laravel
+
+  frontend:
+    build:
+      context: ./front_end
+      dockerfile: Dockerfile
+    container_name: evolve_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000/api
+    stdin_open: true
+    tty: true
+    depends_on:
+      - web
     networks:
       - laravel
 
