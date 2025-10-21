@@ -14,6 +14,7 @@ import PropertyUnits from './pages/properties/PropertyUnits';
 
 import TenantList from "./pages/tenants/TenantList";
 import TenantProfile from "./pages/tenants/TenantProfile";
+import TenantCreate from "./pages/tenants/TenantCreate";
 import PaymentHistory from "./pages/payments/PaymentHistory";
 import PaymentCollect from "./pages/payments/PaymentCollect";
 import InvoiceDetail from "./pages/payments/InvoiceDetail";
@@ -51,6 +52,7 @@ export default function App() {
           </Route>
           <Route path="tenants">
             <Route index element={<TenantList />} />
+            <Route path="create" element={<TenantCreate />} />
             <Route path=":id" element={<TenantProfile />} />
           </Route>
           <Route path="payments">

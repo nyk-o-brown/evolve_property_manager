@@ -1,102 +1,112 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { User, Phone, Mail } from "lucide-react";
 
-// Dummy data for the tenants
-const dummyTenants = [
-  {
-    id: "t1",
-    name: "John Doe",
-    House_Number: "7h",
-    email: "john.doe@example.com",
-    phone: "123-456-7890",
-    status: "Active",
-    leaseEnd: "2024-12-31",
-  },
-  {
-    id: "t2",
-    name: "Jane Smith",
-    House_Number: "9j",
-    email: "jane.smith@example.com",
-    phone: "098-765-4321",
-    status: "Active",
-    leaseEnd: "2025-06-30",
-  },
-  {
-    id: "t3",
-    name: "Peter Jones",
-    House_Number: "7d",
-    email: "peter.jones@example.com",
-    phone: "555-123-4567",
-    status: "Pending",
-    leaseEnd: "2024-03-15",
-  },
-];
+const API_URL = 'http://localhost/evolve_property_manager/react_taiwind_postgreess_base_plate/backend/api';
 
-export default function TenantsList({ theme = "light" }) {
-  const [tenants] = useState(dummyTenants);
-  const isDarkTheme = theme === "dark";
+export default function TenantList() {
+  const [tenants, setTenants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const cardClasses = isDarkTheme
-    ? "bg-gray-800 text-gray-200 shadow-lg"
-    : "bg-white text-gray-800 shadow-md";
+  useEffect(() => {
+    const fetchTenants = async () => {
+      try {
+        const response = await fetch(`${API_URL}/tenant/list.php`);
+        const data = await response.json();
+        if (data.status === 'success') {
+          setTenants(data.tenants || []);
+        } else {
+          throw new Error(data.message || 'Failed to fetch tenants');
+        }
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching tenants:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTenants();
+  }, []);
+
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (error) return <div className="p-6 text-red-500">Error: {error}</div>;
 
   return (
-    <div className={`p-6 rounded-2xl ${cardClasses}`}>
-      <div className="flex justify-between items-center mb-4">
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Tenants</h1>
         <Link
-          to="/dashboard/tenants/new"
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+          to="/dashboard/tenants/create"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
         >
           + Add Tenant
         </Link>
       </div>
 
       {tenants.length === 0 ? (
-        <p>No tenants found.</p>
+        <div className="text-center py-8">
+          <p className="text-gray-500">No tenants found.</p>
+        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead>
-              <tr className="text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                <th className="px-6 py-3">Tenant Name</th>
-                <th className="px-6 py-3">House_Number</th>
-                <th className="px-6 py-3">Status</th>
-                <th className="px-6 py-3">Lease End</th>
-                <th className="px-6 py-3">Actions</th>
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Tenant
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Unit
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Property
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th scope="col" className="relative px-6 py-3">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="bg-white divide-y divide-gray-200">
               {tenants.map((tenant) => (
-                <tr
-                  key={tenant.id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">{tenant.name}</td>
+                <tr key={tenant.user_ID} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {tenant.property}
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
+                        <span className="text-lg font-medium text-gray-600">
+                          {tenant.user_name.charAt(0)}
+                        </span>
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">{tenant.user_name}</div>
+                        <div className="text-sm text-gray-500">{tenant.email}</div>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex px-2 text-xs font-semibold leading-5 rounded-full ${
-                        tenant.status === "Active"
-                          ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200"
-                          : "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200"
-                      }`}
-                    >
-                      {tenant.status}
+                    <div className="text-sm text-gray-900">Unit {tenant.unit_name}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{tenant.property_name}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      tenant.tenant_status === 'occupied' 
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {tenant.tenant_status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {tenant.leaseEnd}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <Link
-                      to={`/dashboard/tenants/${tenant.id}`}
+                      to={`/dashboard/tenants/${tenant.user_ID}`}
                       className="text-blue-600 hover:text-blue-900"
                     >
-                      View Profile
+                      View Details
                     </Link>
                   </td>
                 </tr>
