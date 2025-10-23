@@ -1,7 +1,6 @@
-// src/pages/properties/PropertyDetail.jsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { getProperty, deleteProperty } from "../../services/propertyService";
+import { getPropertyById, deleteProperty } from "../../services/propertyService";
 
 export default function PropertyDetail() {
   const { id } = useParams();
@@ -12,8 +11,8 @@ export default function PropertyDetail() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await getProperty(id);
-        setProperty(res.data);
+        const res = await getPropertyById(id);
+        setProperty(res.properties?.[0] || null); // Adjusted for expected API structure
       } catch (err) {
         console.error("❌ Error fetching property:", err);
       } finally {
@@ -40,13 +39,12 @@ export default function PropertyDetail() {
   return (
     <div className="p-6 space-y-4">
       <img
-        src={property.image || "/placeholder.jpg"}
-        alt={property.title}
+        src={property.image_URL || "/placeholder.jpg"}
+        alt={property.property_name}
         className="w-full h-60 object-cover rounded-md"
       />
-      <h1 className="text-2xl font-bold">{property.title}</h1>
-      <p className="text-gray-600">{property.location}</p>
-      <p className="text-lg font-semibold text-blue-600">${property.price}</p>
+      <h1 className="text-2xl font-bold">{property.property_name}</h1>
+      <p className="text-gray-600">{property.address}, {property.city}, {property.state}</p>
       <p className="text-sm">{property.description}</p>
 
       <div className="flex gap-4 mt-4">

@@ -1,112 +1,64 @@
-// Temporary mock data service - replace with actual API calls later
-const mockProperties = [
-  {
-    id: 1,
-    name: "Sunset Apartments",
-    address: "123 Main St",
-    units: 10,
-    description: "Modern apartment complex with great amenities"
-  }
-];
+import { apiGet, apiPost } from './api';
 
-export const getProperties = async () => {
-  return mockProperties;
-};
+// Individual named exports for flexibility
+export async function getAllProperties() {
+  return await apiGet('/properties/get_properties.php');
+}
 
-export const getProperty = async (id) => {
-  return mockProperties.find(p => p.id === parseInt(id));
-};
+export async function getPropertyById(id) {
+  return await apiGet(`/properties/get_properties.php?id=${id}`);
+}
 
-export const createProperty = async (propertyData) => {
-  const newProperty = {
-    id: mockProperties.length + 1,
-    ...propertyData
-  };
-  mockProperties.push(newProperty);
-  return newProperty;
-};
+export async function createProperty(propertyData) {
+  return await apiPost('/properties/create_properties.php', propertyData);
+}
 
-export const updateProperty = async (id, propertyData) => {
-  const index = mockProperties.findIndex(p => p.id === parseInt(id));
-  if (index === -1) return null;
-  
-  mockProperties[index] = {
-    ...mockProperties[index],
-    ...propertyData
-  };
-  return mockProperties[index];
-};
+export async function updateProperty(id, propertyData) {
+  return await apiPost('/properties/update_properties.php', { id, ...propertyData });
+}
 
-export const deleteProperty = async (id) => {
-  const index = mockProperties.findIndex(p => p.id === parseInt(id));
-  if (index === -1) return false;
-  
-  mockProperties.splice(index, 1);
-  return true;
-};
+export async function deleteProperty(id) {
+  return await apiPost('/properties/delete_properties.php', { id });
+}
 
+// Units
+export async function getAllUnits() {
+  return await apiGet('/properties/get_units.php');
+}
 
+export async function getUnitsByProperty(propertyId) {
+  return await apiGet(`/properties/get_units.php?property_id=${propertyId}`);
+}
 
+export async function createUnit(unitData) {
+  return await apiPost('/properties/create_units.php', unitData);
+}
 
+export async function updateUnit(id, unitData) {
+  return await apiPost('/properties/update_units.php', { id, ...unitData });
+}
 
-// src/services/propertyService.js
-const API_URL = 'http://localhost/evolve_property_manager/react_taiwind_postgreess_base_plate/backend/api';
+export async function deleteUnit(id) {
+  return await apiPost('/properties/delete_unit.php', { id });
+}
 
-export const propertyService = {
-    async getAllProperties() {
-        try {
-            console.log('Fetching from:', `${API_URL}/properties/read.php`);
-            const response = await fetch(`${API_URL}/properties/read.php`);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return await response.json();
-        } catch (error) {
-            console.error('Fetch error:', error);
-            throw error;
-        }
-    },
+// Tenants
+export async function getAllTenants() {
+  return await apiGet('/properties/get_tenants.php');
+}
 
-    async createProperty(propertyData) {
-        const response = await fetch(`${API_URL}/properties/create.php`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(propertyData),
-        });
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    },
+export async function getTenantById(id) {
+  return await apiGet(`/properties/get_tenants.php?id=${id}`);
+}
 
-    async updateProperty(id, propertyData) {
-        const response = await fetch(`${API_URL}/properties/update.php`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ id, ...propertyData }),
-        });
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    },
+export async function createTenant(tenantData) {
+  return await apiPost('/properties/create_tenant.php', tenantData);
+}
 
-    async deleteProperty(id) {
-        const response = await fetch(`${API_URL}/properties/delete.php`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ id }),
-        });
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    },
-};
+export async function updateTenant(id, tenantData) {
+  return await apiPost('/properties/update_tenant.php', { id, ...tenantData });
+}
+
+export async function deleteTenant(id) {
+  return await apiPost('/properties/delete_tenant.php', { id });
+}
