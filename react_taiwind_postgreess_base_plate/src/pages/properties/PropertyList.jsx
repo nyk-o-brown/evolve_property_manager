@@ -12,7 +12,7 @@ export default function PropertyList() {
     useEffect(() => {
         const fetchProperties = async () => {
             try {
-                const response = await fetch(`${API_URL}/properties/list.php`);
+                const response = await fetch(`${API_URL}/properties/get_properties.php`);
                 const data = await response.json();
                 if (data.status === 'success') {
                     setProperties(data.properties || []);

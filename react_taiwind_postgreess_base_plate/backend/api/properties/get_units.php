@@ -42,4 +42,16 @@ try {
         'message' => 'Database Error: ' . $e->getMessage()
     ]);
 }
+
+try {
+    $db = (new Database())->getConnection();
+    $stmt = $db->prepare("SELECT unit_ID, unit_name FROM properties_units WHERE property_ID = ? AND tenant_ID IS NULL");
+    $stmt->execute([$propertyId]);
+    $units = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    echo json_encode(["status" => "success", "units" => $units]);
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+}
 ?>
