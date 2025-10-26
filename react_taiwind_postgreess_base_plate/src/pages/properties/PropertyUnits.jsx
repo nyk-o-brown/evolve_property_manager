@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const API_URL = 'http://localhost/evolve_property_manager/react_taiwind_postgreess_base_plate/backend/api/properties';
 
 export default function PropertyUnits() {
   const { id } = useParams();
   const propertyId = Number(id);
+  const navigate = useNavigate();
   const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,6 +44,8 @@ export default function PropertyUnits() {
       setLoading(false);
     }
   };
+
+ 
 
   useEffect(() => {
     if (!id || id === 'undefined' || isNaN(propertyId)) {
@@ -138,7 +141,17 @@ export default function PropertyUnits() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Property Units</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Property Units</h1>
+        <button
+          onClick={() => navigate(`/dashboard/properties/${id}/units/create`)}
+          className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2"
+        >
+          <span>+</span>
+          Create New Unit
+        </button>
+      </div>
+       
 
       {units.length === 0 ? (
         <div className="text-center py-8">
