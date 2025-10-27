@@ -10,6 +10,7 @@ import PropertyCreate from "./pages/properties/PropertyCreate";
 import PropertyEdit from "./pages/properties/PropertyEdit";
 import PropertyUnits from './pages/properties/PropertyUnits';
 import UnitsCreate from './pages/properties/UnitsCreate';
+import ListUnit from './pages/properties/ListUnit';
 
 
 import TenantList from "./pages/tenants/TenantList";
@@ -44,7 +45,18 @@ export default function App() {
             <Route path=":id/edit" element={<PropertyEdit />} />
             <Route path=":id/units" element={<PropertyUnits />} />
             <Route path=":id/units/create" element={<UnitsCreate />} />
+            <Route path="list-unit/" element={<ListUnit />} /> 
+            
           </Route>
+
+
+          {/*}
+          <Route path="/dashboard/properties" element={<PropertyList />}>
+            <Route path="list-unit" element={<ListUnit />} /> // ✅ Relative path
+          </Route>
+          */}
+
+
           <Route path="tenants">
             <Route index element={<TenantList />} />
             <Route path="create" element={<TenantCreate />} />

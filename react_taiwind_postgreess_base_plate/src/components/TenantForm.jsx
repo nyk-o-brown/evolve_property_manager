@@ -26,7 +26,7 @@ export default function TenantForm({ onSubmit, isLoading }) {
   useEffect(() => {
     const fetchProperties = async () => {
       try {
-        const response = await fetch('http://localhost/evolve_property_manager/react_taiwind_postgreess_base_plate/backend/api/properties/read.php');
+        const response = await fetch('http://localhost/evolve_property_manager/react_taiwind_postgreess_base_plate/backend/api/properties/get_properties');
         const data = await response.json();
         if (data.status === 'success') {
           setProperties(data.properties);

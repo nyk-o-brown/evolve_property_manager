@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const API_URL = 'http://localhost/evolve_property_manager/react_taiwind_postgreess_base_plate/backend/api/properties';
 
@@ -214,9 +215,11 @@ export default function PropertyUnits() {
               )}
 
               {unit.tenant_status === 'unoccupied' && (
-                <button className="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors duration-200">
-                  List Unit
-                </button>
+                <Link to="/dashboard/properties/list-unit">
+                  <button className="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors duration-200">
+                    List Unit
+                  </button>
+                </Link>
               )}
             </div>
           ))}

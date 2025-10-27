@@ -14,7 +14,7 @@ export default function TenantList() {
         const response = await fetch(`${API_URL}/tenant/list.php`);
         const data = await response.json();
         if (data.status === 'success') {
-          setTenants(data.tenants || []);
+          setTenants(data.users || []);
         } else {
           throw new Error(data.message || 'Failed to fetch tenants');
         }
