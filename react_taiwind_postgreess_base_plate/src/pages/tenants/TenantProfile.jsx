@@ -1,69 +1,56 @@
 import { useParams } from "react-router-dom";
-import { User, Phone, Mail, Home, Calendar, FileText } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Phone, Mail, Home, Calendar, FileText } from "lucide-react";
 
-// Dummy data for all tenants
-const dummyTenants = [
-  {
-    id: "t1",
-    name: "John Doe",
-    House_Number: "7h",
-    email: "john.doe@example.com",
-    phone: "123-456-7890",
-    status: "Active",
-    leaseStart: "2023-01-01",
-    leaseEnd: "2024-12-31",
-    rentAmount: 1500,
-    deposit: 1500,
-  },
-  {
-    id: "t2",
-    name: "Jane Smith",
-    House_Number: "9j",
-    email: "jane.smith@example.com",
-    phone: "098-765-4321",
-    status: "Active",
-    leaseStart: "2023-06-01",
-    leaseEnd: "2025-06-30",
-    rentAmount: 1200,
-    deposit: 1200,
-  },
-  {
-    id: "t3",
-    name: "Peter Jones",
-    House_Number: "7d",
-    email: "peter.jones@example.com",
-    phone: "555-123-4567",
-    status: "Pending",
-    leaseStart: "2023-09-01",
-    leaseEnd: "2024-03-15",
-    rentAmount: 1800,
-    deposit: 1800,
-  },
-];
+const API_URL = 'http://localhost/evolve_property_manager/react_taiwind_postgreess_base_plate/backend/api/tenant/list.php';
 
 export default function TenantProfile({ theme = "light" }) {
   const { id } = useParams();
-  const tenant = dummyTenants.find((t) => t.id === id);
-
+  const [tenant, setTenant] = useState(null);
+  const [error, setError] = useState(null);
   const isDarkTheme = theme === "dark";
+
+  useEffect(() => {
+    const fetchTenant = async () => {
+      try {
+        const res = await fetch(`${API_URL}?id=${id}`);
+        const data = await res.json();
+
+        if (data.status === 'success') {
+          setTenant(data.user);
+        } else {
+          throw new Error(data.message || 'Tenant not found');
+        }
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+
+    fetchTenant();
+  }, [id]);
+
   const cardClasses = isDarkTheme
     ? "bg-gray-800 text-gray-200 shadow-lg"
     : "bg-white text-gray-800 shadow-md";
 
-  if (!tenant) {
+  if (error) {
     return (
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">Tenant Not Found</h1>
-        <p>Could not find a tenant with the ID: {id}</p>
+        <h1 className="text-2xl font-bold mb-4">Error</h1>
+        <p>{error}</p>
       </div>
     );
+  }
+
+  if (!tenant) {
+    return <div className="p-6">Loading tenant profile...</div>;
   }
 
   return (
     <div className="p-6">
       <div className={`p-6 rounded-2xl ${cardClasses}`}>
         <h1 className="text-3xl font-bold mb-6">
-          Tenant Profile: {tenant.name}
+          Tenant Profile: {tenant.user_name}
         </h1>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Contact Information */}
@@ -73,11 +60,11 @@ export default function TenantProfile({ theme = "light" }) {
             </h2>
             <div className="flex items-center space-x-3">
               <Mail size={20} className="text-gray-500" />
-              <p className="text-gray-600 dark:text-gray-400">{tenant.email}</p>
+              <p className="text-gray-600 dark:text-gray-400">{tenant.email || '—'}</p>
             </div>
             <div className="flex items-center space-x-3">
               <Phone size={20} className="text-gray-500" />
-              <p className="text-gray-600 dark:text-gray-400">{tenant.phone}</p>
+              <p className="text-gray-600 dark:text-gray-400">{tenant.phone_number || '—'}</p>
             </div>
           </div>
 
@@ -89,19 +76,19 @@ export default function TenantProfile({ theme = "light" }) {
             <div className="flex items-center space-x-3">
               <Home size={20} className="text-gray-500" />
               <p className="text-gray-600 dark:text-gray-400">
-                Property: {tenant.property}
+                Property: {tenant.property_name || '—'}, Unit: {tenant.unit_name || '—'}
               </p>
             </div>
             <div className="flex items-center space-x-3">
               <Calendar size={20} className="text-gray-500" />
               <p className="text-gray-600 dark:text-gray-400">
-                Lease: {tenant.leaseStart} to {tenant.leaseEnd}
+                Lease: {tenant.lease_start_date || '—'} to {tenant.lease_end_date || '—'}
               </p>
             </div>
             <div className="flex items-center space-x-3">
               <FileText size={20} className="text-gray-500" />
               <p className="text-gray-600 dark:text-gray-400">
-                Rent: ${tenant.rentAmount} / month
+                Rent: ${tenant.rent_price || '—'} / month
               </p>
             </div>
           </div>
