@@ -1,14 +1,12 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
-// Assuming the API path is similar to your units endpoint
 const API_URL = 'http://localhost/evolve_property_manager/react_taiwind_postgreess_base_plate/backend/api/properties';
 
 export default function ListUnit() {
-      
   const navigate = useNavigate();
-  
-  // State to hold the new tenant/user data
+  const { propertyId, unitId } = useParams(); // ✅ 1. Extract from URL
+
   const [formValues, setFormValues] = useState({
     user_name: '',
     email: '',
@@ -16,10 +14,26 @@ export default function ListUnit() {
     emergency_contact_name: '',
     emergency_contact_phone: ''
   });
-  
+
+  const [unitDetails, setUnitDetails] = useState(null); // optional
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+
+  // ✅ 2. Optional: Fetch unit details for display
+  useEffect(() => {
+    const fetchUnit = async () => {
+      try {
+        const res = await fetch(`${API_URL}/get_units.php?id=${propertyId}`);
+        const data = await res.json();
+        const unit = data.units?.find(u => u.unit_ID === unitId || u.unit_ID === Number(unitId));
+        setUnitDetails(unit || null);
+      } catch (err) {
+        console.error('Failed to fetch unit details:', err);
+      }
+    };
+    fetchUnit();
+  }, [propertyId, unitId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,68 +41,78 @@ export default function ListUnit() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    setSubmitting(true);
-    setError(null);
-    setSuccess(false);
+  e.preventDefault();
+  setSubmitting(true);
+  setError(null);
+  setSuccess(false);
 
-    // Payload matches the required fields in create_user.php
-    const payload = {
-      user_name: formValues.user_name,
-      email: formValues.email,
-      phone_number: formValues.phone_number || null,
-      emergency_contact_name: formValues.emergency_contact_name || null,
-      emergency_contact_phone: formValues.emergency_contact_phone || null
-    };
+  if (!unitDetails) {
+    setError('Unit details not loaded.');
+    setSubmitting(false);
+    return;
+  }
 
-    try {
-      const res = await fetch(`${API_URL}/create_user.php`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+  const payload = {
+    // Tenant info
+    user_name: formValues.user_name,
+    email: formValues.email,
+    phone_number: formValues.phone_number || null,
+    emergency_contact_name: formValues.emergency_contact_name || null,
+    emergency_contact_phone: formValues.emergency_contact_phone || null,
 
-      const contentType = res.headers.get('content-type') || '';
-      const result = contentType.includes('application/json') ? await res.json() : null;
+    // Unit + property info
+    unit_ID: unitId,
+    property_ID: propertyId,
+    unit_name: unitDetails.unit_name,
+    rent_price: unitDetails.rent_price,
+    lease_start_date: unitDetails.lease_start_date,
+    lease_end_date: unitDetails.lease_end_date,
+    security_deposit: unitDetails.security_deposit
+  };
 
-      if (!res.ok) {
-        const message = result?.message || `Request failed (HTTP ${res.status})`;
-        throw new Error(message);
-      }
+  try {
+    const res = await fetch(`${API_URL}/create_user.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-      if (result && result.status === 'success') {
-        setSuccess(true);
-        // Navigate to a tenants list page or show a success message
-        setTimeout(() => {
-          // You might want to navigate to a page where you can now list a unit to this new user
-          navigate('/dashboard/tenants'); // Example redirect
-        }, 1500);
-      } else if (result) {
-        throw new Error(result.message || 'Unknown server response');
-      } else {
-        setSuccess(true);
-        setTimeout(() => {
-          navigate('/dashboard/tenants');
-        }, 1500);
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSubmitting(false);
+    const contentType = res.headers.get('content-type') || '';
+    const result = contentType.includes('application/json') ? await res.json() : null;
+
+    if (!res.ok) {
+      const message = result?.message || `Request failed (HTTP ${res.status})`;
+      throw new Error(message);
     }
-  };
 
-  const handleCancel = () => {
-    // Navigate back to the previous page or a main tenants/dashboard page
-    navigate(-1); 
-  };
+    if (result?.status === 'success') {
+      setSuccess(true);
+      setTimeout(() => navigate('/dashboard/tenants'), 1500);
+    } else {
+      throw new Error(result?.message || 'Unknown server response');
+    }
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setSubmitting(false);
+  }
+};
+
+
+  const handleCancel = () => navigate(-1);
 
   return (
     <div className="p-6 max-w-xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">Register New Tenant</h1>
-        <p className="text-gray-600">Enter the new tenant's details to create a user account.</p>
+        <p className="text-gray-600">Assign a tenant to Unit #{unitId} of Property #{propertyId}.</p>
+        {unitDetails && (
+          <div className="text-sm text-gray-500 mt-2">
+            <p><strong>Unit:</strong> {unitDetails.unit_name}</p>
+            <p><strong>Rent:</strong> ${unitDetails.rent_price}</p>
+            <p><strong>Lease:</strong> {unitDetails.lease_start_date} to {unitDetails.lease_end_date}</p>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -106,96 +130,74 @@ export default function ListUnit() {
       <div className="bg-white p-6 rounded-lg shadow-lg">
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 gap-4">
-            {/* User Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
               <input
                 name="user_name"
                 value={formValues.user_name}
                 onChange={handleChange}
                 className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                placeholder="Tenant's Full Name"
                 required
               />
             </div>
 
-            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
               <input
                 name="email"
                 type="email"
                 value={formValues.email}
                 onChange={handleChange}
                 className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                placeholder="tenant@example.com"
                 required
               />
             </div>
 
-            {/* Phone Number */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone Number
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
               <input
                 name="phone_number"
-                type="tel"
                 value={formValues.phone_number}
                 onChange={handleChange}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                placeholder="(123) 456-7890"
+                className="w-full p-2 border rounded"
               />
             </div>
 
-            {/* Emergency Contact Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Emergency Contact Name
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Name</label>
               <input
                 name="emergency_contact_name"
                 value={formValues.emergency_contact_name}
                 onChange={handleChange}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                placeholder="Contact Person"
+                className="w-full p-2 border rounded"
               />
             </div>
 
-            {/* Emergency Contact Phone */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Emergency Contact Phone
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact Phone</label>
               <input
                 name="emergency_contact_phone"
-                type="tel"
                 value={formValues.emergency_contact_phone}
                 onChange={handleChange}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                placeholder="(987) 654-3210"
+                className="w-full p-2 border rounded"
               />
             </div>
           </div>
 
-          <div className="mt-6 flex gap-3">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="bg-green-600 text-white py-2 px-6 rounded hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {submitting ? 'Submitting...' : 'Create Tenant'}
-            </button>
+          <div className="mt-6 flex justify-between">
             <button
               type="button"
               onClick={handleCancel}
-              className="bg-gray-400 text-white py-2 px-6 rounded hover:bg-gray-500 transition-colors duration-200"
+              className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
             >
               Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              {submitting ? 'Submitting...' : 'Create Tenant'}
             </button>
           </div>
         </form>

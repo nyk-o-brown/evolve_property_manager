@@ -45,7 +45,7 @@ export default function App() {
             <Route path=":id/edit" element={<PropertyEdit />} />
             <Route path=":id/units" element={<PropertyUnits />} />
             <Route path=":id/units/create" element={<UnitsCreate />} />
-            <Route path="list-unit/" element={<ListUnit />} /> 
+            <Route path=":propertyId/units/:unitId/list" element={<ListUnit />} /> 
             
           </Route>
 
