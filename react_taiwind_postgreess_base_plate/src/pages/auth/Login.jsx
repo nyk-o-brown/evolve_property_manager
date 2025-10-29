@@ -9,6 +9,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [role, setRole] = useState(null); // role: "admin" or "tenant"
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -21,17 +22,13 @@ const Login = () => {
 
   // Mock login function
   const mockLogin = async (email, password) => {
-    // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Simulate successful login
     const mockUser = {
       id: Math.random().toString(36).substr(2, 9),
       name: "Demo User",
       email: email,
       token: "mock-jwt-token-" + Math.random().toString(36).substr(2, 9)
     };
-    
     return {
       success: true,
       user: mockUser,
@@ -58,19 +55,27 @@ const Login = () => {
       return;
     }
 
+    if (!role) {
+      setError("Please select a login role (Administrator or Tenant).");
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      // Use mock function instead of real API call
       const result = await mockLogin(email, password);
 
-      // Store mock token and user data
       localStorage.setItem("token", result.token);
       localStorage.setItem("user", JSON.stringify(result.user));
 
-      console.log("Mock login successful:", result.user);
-      
-      // Redirect to dashboard after successful login
+      // Redirect based on selected role
       setTimeout(() => {
-        navigate("/dashboard", { replace: true });
+        if (role === "admin") {
+          navigate("/dashboard", { replace: true });
+        } else if (role === "tenant") {
+          navigate("/tenant", { replace: true });
+        } else {
+          setError("Unknown role selected.");
+        }
       }, 500);
 
     } catch (err) {
@@ -81,7 +86,10 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
-    // Mock Google login - just redirect to dashboard after delay
+    if (!role) {
+      setError("Please select a login role before continuing with Google.");
+      return;
+    }
     setIsLoading(true);
     setTimeout(() => {
       localStorage.setItem("token", "mock-google-token");
@@ -90,7 +98,11 @@ const Login = () => {
         name: "Google User",
         email: "user@google.com"
       }));
-      navigate("/dashboard", { replace: true });
+      if (role === "admin") {
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate("/tenant", { replace: true });
+      }
     }, 1500);
   };
 
@@ -183,6 +195,30 @@ const Login = () => {
                 <p className="text-red-600 text-sm text-center">{error}</p>
               </div>
             )}
+            {/* Role selection */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-700 mb-2">Choose your login role:</p>
+            <div className="flex justify-center gap-4">
+              <button
+                type="button"
+                onClick={() => { setRole("admin"); setError(""); }}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  role === "admin" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800"
+                } hover:bg-blue-500 transition`}
+              >
+                Administrator
+              </button>
+              <button
+                type="button"
+                onClick={() => { setRole("tenant"); setError(""); }}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  role === "tenant" ? "bg-green-600 text-white" : "bg-gray-200 text-gray-800"
+                } hover:bg-green-500 transition`}
+              >
+                Tenant
+              </button>
+            </div>
+          </div>
 
             <button
               type="submit"
@@ -198,7 +234,10 @@ const Login = () => {
                 "Sign in to your account"
               )}
             </button>
+            
           </form>
+
+          
 
           <div className="mt-6">
             <div className="relative">
@@ -242,4 +281,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Login

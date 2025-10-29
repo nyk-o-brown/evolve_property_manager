@@ -12,7 +12,6 @@ import PropertyUnits from './pages/properties/PropertyUnits';
 import UnitsCreate from './pages/properties/UnitsCreate';
 import ListUnit from './pages/properties/ListUnit';
 
-
 import TenantList from "./pages/tenants/TenantList";
 import TenantProfile from "./pages/tenants/TenantProfile";
 import TenantCreate from "./pages/tenants/TenantCreate";
@@ -26,6 +25,9 @@ import ReportsDashboard from "./pages/reports/ReportsDashboard";
 import SettingsPage from "./pages/settings/SettingsPage";
 import DashboardLayout from "./components/layout/DashboardLayout";
 
+// Tenant dashboard import (route: /tenant)
+import TenantDashboard from "./pages/tenant/TenantDashboard";
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -35,7 +37,10 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Protected routes */}
+        {/* Tenant side entry */}
+        <Route path="/tenant" element={<TenantDashboard />} />
+
+        {/* Protected routes (admin dashboard) */}
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="properties">
@@ -45,33 +50,27 @@ export default function App() {
             <Route path=":id/edit" element={<PropertyEdit />} />
             <Route path=":id/units" element={<PropertyUnits />} />
             <Route path=":id/units/create" element={<UnitsCreate />} />
-            <Route path=":propertyId/units/:unitId/list" element={<ListUnit />} /> 
-            
+            <Route path=":propertyId/units/:unitId/list" element={<ListUnit />} />
           </Route>
-
-
-          {/*}
-          <Route path="/dashboard/properties" element={<PropertyList />}>
-            <Route path="list-unit" element={<ListUnit />} /> // ✅ Relative path
-          </Route>
-          */}
-
 
           <Route path="tenants">
             <Route index element={<TenantList />} />
             <Route path="create" element={<TenantCreate />} />
             <Route path=":id" element={<TenantProfile />} />
           </Route>
+
           <Route path="payments">
             <Route index element={<PaymentHistory />} />
             <Route path="collect" element={<PaymentCollect />} />
             <Route path=":id" element={<InvoiceDetail />} />
           </Route>
+
           <Route path="maintenance">
             <Route index element={<MaintenanceList />} />
             <Route path="request" element={<MaintenanceRequest />} />
             <Route path=":id" element={<MaintenanceTrack />} />
           </Route>
+
           <Route path="reports" element={<ReportsDashboard />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
