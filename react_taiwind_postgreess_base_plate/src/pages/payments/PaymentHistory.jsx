@@ -1,45 +1,55 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowDown, ArrowUp } from "lucide-react";
 
-// Dummy data for payment records
-const dummyPayments = [
-  {
-    id: "p1",
-    tenantName: "John Doe",
-    property: "123 Main St",
-    amount: 1500,
-    status: "Paid",
-    date: "2023-09-20",
-    invoiceId: "INV-001",
-  },
-  {
-    id: "p2",
-    tenantName: "Jane Smith",
-    property: "456 Oak Ave",
-    amount: 1200,
-    status: "Paid",
-    date: "2023-09-18",
-    invoiceId: "INV-002",
-  },
-  {
-    id: "p3",
-    tenantName: "Peter Jones",
-    property: "789 Pine Rd",
-    amount: 1800,
-    status: "Pending",
-    date: "2023-09-15",
-    invoiceId: "INV-003",
-  },
-];
-
 export default function PaymentHistory({ theme = "light" }) {
-  const [payments] = useState(dummyPayments);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const isDarkTheme = theme === "dark";
 
   const cardClasses = isDarkTheme
     ? "bg-gray-800 text-gray-200 shadow-lg"
     : "bg-white text-gray-800 shadow-md";
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const res = await fetch(
+          "http://localhost/evolve_property_manager/react_taiwind_postgreess_base_plate/backend/api/payments/get_payments.php",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json"
+            }
+          }
+        );
+
+        if (!res.ok) {
+          throw new Error(`Server responded with ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        // Expecting data.payments to be an array; adapt if your endpoint returns differently
+        if (Array.isArray(data.payments)) {
+          setPayments(data.payments);
+        } else {
+          // fallback: if the endpoint returns the array directly
+          setPayments(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        setError(err.message || "Failed to load payments");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPayments();
+  }, []);
 
   return (
     <div className={`p-6 rounded-2xl ${cardClasses}`}>
@@ -47,7 +57,13 @@ export default function PaymentHistory({ theme = "light" }) {
         <h1 className="text-2xl font-bold">Payment History</h1>
       </div>
 
-      {payments.length === 0 ? (
+      {loading ? (
+        <div className="py-10 text-center text-gray-500">Loading payments…</div>
+      ) : error ? (
+        <div className="py-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          Error: {error}
+        </div>
+      ) : payments.length === 0 ? (
         <p>No payment records found.</p>
       ) : (
         <div className="overflow-x-auto">
@@ -66,38 +82,38 @@ export default function PaymentHistory({ theme = "light" }) {
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {payments.map((payment) => (
                 <tr
-                  key={payment.id}
+                  key={payment.id ?? payment.payment_id ?? payment.invoiceId}
                   className="hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {payment.tenantName}
+                    {payment.tenant_name ?? payment.tenantName ?? "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {payment.property}
+                    {payment.property_address ?? payment.property ?? "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    ${payment.amount}
+                    ${payment.amount ?? payment.total ?? 0}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`inline-flex px-2 text-xs font-semibold leading-5 rounded-full ${
-                        payment.status === "Paid"
+                        (payment.status ?? "Pending") === "Paid"
                           ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200"
                           : "bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200"
                       }`}
                     >
-                      {payment.status}
+                      {payment.status ?? "Pending"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {payment.date}
+                    {payment.date ?? payment.paid_at ?? "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {payment.invoiceId}
+                    {payment.invoice_id ?? payment.invoiceId ?? "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <Link
-                      to={`/payments/${payment.id}`}
+                      to={`/payments/${payment.id ?? payment.payment_id ?? payment.invoice_id ?? ""}`}
                       className="text-blue-600 hover:text-blue-900"
                     >
                       Details
