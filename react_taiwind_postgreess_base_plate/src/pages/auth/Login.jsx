@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
+const API_URL = 'http://localhost/evolve_property_manager/react_taiwind_postgreess_base_plate/backend/api/properties';
+
 const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
@@ -9,7 +11,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [role, setRole] = useState(null); // role: "admin" or "tenant"
+  const [role, setRole] = useState(null);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -20,20 +22,42 @@ const Login = () => {
     setError("");
   };
 
-  // Mock login function
-  const mockLogin = async (email, password) => {
+  // Mock admin login function
+  const mockAdminLogin = async (email, password) => {
     await new Promise(resolve => setTimeout(resolve, 1500));
     const mockUser = {
       id: Math.random().toString(36).substr(2, 9),
-      name: "Demo User",
+      name: "Admin User",
       email: email,
-      token: "mock-jwt-token-" + Math.random().toString(36).substr(2, 9)
+      token: "mock-jwt-token-" + Math.random().toString(36).substr(2, 9),
+      role: "admin"
     };
     return {
       success: true,
       user: mockUser,
       token: mockUser.token
     };
+  };
+
+  // Real tenant login function
+  const tenantLogin = async (email, password) => {
+    try {
+      const res = await fetch(`${API_URL}/tenant_login.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || result.status !== 'success') {
+        throw new Error(result.message || 'Login failed');
+      }
+
+      return result;
+    } catch (err) {
+      throw new Error(err.message || 'Server error. Please try again.');
+    }
   };
 
   const handleLogin = async (e) => {
@@ -43,6 +67,7 @@ const Login = () => {
 
     const { email, password } = formData;
 
+    // Validation
     if (!email || !password) {
       setError("Please fill in all fields.");
       setIsLoading(false);
@@ -62,24 +87,33 @@ const Login = () => {
     }
 
     try {
-      const result = await mockLogin(email, password);
+      if (role === "admin") {
+        // Admin login (mock)
+        const result = await mockAdminLogin(email, password);
+        localStorage.setItem("token", result.token);
+        localStorage.setItem("user", JSON.stringify(result.user));
+        localStorage.setItem("role", "admin");
 
-      localStorage.setItem("token", result.token);
-      localStorage.setItem("user", JSON.stringify(result.user));
-
-      // Redirect based on selected role
-      setTimeout(() => {
-        if (role === "admin") {
+        setTimeout(() => {
           navigate("/dashboard", { replace: true });
-        } else if (role === "tenant") {
+        }, 500);
+
+      } else if (role === "tenant") {
+        // Tenant login (real)
+        const result = await tenantLogin(email, password);
+        
+        // Store tenant data
+        localStorage.setItem("token", result.token);
+        localStorage.setItem("tenant", JSON.stringify(result.tenant));
+        localStorage.setItem("role", "tenant");
+
+        setTimeout(() => {
           navigate("/tenant", { replace: true });
-        } else {
-          setError("Unknown role selected.");
-        }
-      }, 500);
+        }, 500);
+      }
 
     } catch (err) {
-      setError("Invalid email or password. Please try again.");
+      setError(err.message || "Invalid email or password. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -98,20 +132,14 @@ const Login = () => {
         name: "Google User",
         email: "user@google.com"
       }));
+      localStorage.setItem("role", role);
+      
       if (role === "admin") {
         navigate("/dashboard", { replace: true });
       } else {
         navigate("/tenant", { replace: true });
       }
     }, 1500);
-  };
-
-  // Demo credentials helper
-  const fillDemoCredentials = () => {
-    setFormData({
-      email: "demo@example.com",
-      password: "demopassword"
-    });
   };
 
   return (
@@ -190,35 +218,40 @@ const Login = () => {
               </Link>
             </div>
 
+            {/* Role selection */}
+            <div className="text-center">
+              <p className="text-sm text-gray-700 mb-2">Choose your login role:</p>
+              <div className="flex justify-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => { setRole("admin"); setError(""); }}
+                  className={`px-4 py-2 rounded-lg font-medium transition ${
+                    role === "admin" 
+                      ? "bg-blue-600 text-white" 
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  }`}
+                >
+                  Administrator
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setRole("tenant"); setError(""); }}
+                  className={`px-4 py-2 rounded-lg font-medium transition ${
+                    role === "tenant" 
+                      ? "bg-green-600 text-white" 
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  }`}
+                >
+                  Tenant
+                </button>
+              </div>
+            </div>
+
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-red-600 text-sm text-center">{error}</p>
               </div>
             )}
-            {/* Role selection */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-700 mb-2">Choose your login role:</p>
-            <div className="flex justify-center gap-4">
-              <button
-                type="button"
-                onClick={() => { setRole("admin"); setError(""); }}
-                className={`px-4 py-2 rounded-lg font-medium ${
-                  role === "admin" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800"
-                } hover:bg-blue-500 transition`}
-              >
-                Administrator
-              </button>
-              <button
-                type="button"
-                onClick={() => { setRole("tenant"); setError(""); }}
-                className={`px-4 py-2 rounded-lg font-medium ${
-                  role === "tenant" ? "bg-green-600 text-white" : "bg-gray-200 text-gray-800"
-                } hover:bg-green-500 transition`}
-              >
-                Tenant
-              </button>
-            </div>
-          </div>
 
             <button
               type="submit"
@@ -234,10 +267,7 @@ const Login = () => {
                 "Sign in to your account"
               )}
             </button>
-            
           </form>
-
-          
 
           <div className="mt-6">
             <div className="relative">
@@ -281,4 +311,4 @@ const Login = () => {
   );
 };
 
-export default Login
+export default Login;
