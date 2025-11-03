@@ -1,34 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Wrench, CheckCircle, Clock } from "lucide-react";
 
-// Dummy data for maintenance requests
-const dummyRequests = [
-  {
-    id: "m1",
-    issue: "Leaky faucet in Apt 302",
-    status: "Completed",
-    property: "123 Main St",
-    submittedDate: "2023-09-20",
-  },
-  {
-    id: "m2",
-    issue: "Broken AC in Apt 210",
-    status: "In Progress",
-    property: "456 Oak Ave",
-    submittedDate: "2023-09-18",
-  },
-  {
-    id: "m3",
-    issue: "Pest control request in Apt 101",
-    status: "Pending",
-    property: "789 Pine Rd",
-    submittedDate: "2023-09-15",
-  },
-];
-
 export default function MaintenanceList({ theme = "light" }) {
-  const [requests] = useState(dummyRequests);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const isDarkTheme = theme === "dark";
 
   const cardClasses = isDarkTheme
@@ -61,6 +38,28 @@ export default function MaintenanceList({ theme = "light" }) {
     }
   };
 
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const res = await fetch(
+          "http://localhost/evolve_property_manager/react_taiwind_postgreess_base_plate/backend/api/maintenance/get_requests.php"
+        );
+        const data = await res.json();
+        if (Array.isArray(data.requests)) {
+          setRequests(data.requests);
+        } else {
+          setRequests([]);
+        }
+      } catch (err) {
+        setError("Failed to load maintenance requests.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRequests();
+  }, []);
+
   return (
     <div className={`p-6 rounded-2xl ${cardClasses}`}>
       <div className="flex justify-between items-center mb-4">
@@ -73,21 +72,19 @@ export default function MaintenanceList({ theme = "light" }) {
         </Link>
       </div>
 
-      {requests.length === 0 ? (
+      {loading ? (
+        <p>Loading...</p>
+      ) : error ? (
+        <p className="text-red-600">{error}</p>
+      ) : requests.length === 0 ? (
         <p>No maintenance requests found.</p>
       ) : (
         <ul className="divide-y divide-gray-200 dark:divide-gray-700">
           {requests.map((request) => (
-            <li
-              key={request.id}
-              className="py-4 flex items-center justify-between"
-            >
+            <li key={request.id} className="py-4 flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div className="flex-shrink-0">
-                  <Wrench
-                    size={24}
-                    className="text-gray-400 dark:text-gray-500"
-                  />
+                  <Wrench size={24} className="text-gray-400 dark:text-gray-500" />
                 </div>
                 <div>
                   <div className="text-base font-semibold">{request.issue}</div>
