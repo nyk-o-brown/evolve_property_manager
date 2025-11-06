@@ -1,11 +1,11 @@
 <?php
 // config.php — update these to match your environment
 $db_host = '127.0.0.1';
-$db_port = '5432'; // use 3306 for MySQL
+$db_port = '3306'; // use 3306 for MySQL
 $db_name = 'property_manager';
 $db_user = 'root';
-$db_pass = '##&&oracleNyakako7050#';
-$dsn = "pgsql:host=$db_host;port=$db_port;dbname=$db_name"; // change to "mysql:host=...;dbname=..." for MySQL
+$db_pass = '';
+$dsn = "mysql:host=$db_host;port=$db_port;dbname=$db_name"; // change to "mysql:host=...;dbname=..." for MySQL
 
 $options = [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
