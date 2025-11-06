@@ -11,6 +11,7 @@ import {
   Calendar,
   HelpCircle,
   Wrench,
+  DollarSign,
 } from "lucide-react";
 
 // You would get this from a theme context or state
@@ -23,6 +24,7 @@ const navItems = [
   { to: "/dashboard/maintenance", label: "Maintenance", icon: Wrench },
   { to: "/dashboard/reports", label: "Reports", icon: BarChart3 },
   { to: "/dashboard/settings", label: "Settings", icon: Settings },
+  { to: "/dashboard/expenses", label: "Expenses", icon: DollarSign,}
 ];
 
 export default function Sidebar() {

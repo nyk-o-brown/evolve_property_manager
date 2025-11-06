@@ -28,6 +28,9 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 // Tenant dashboard import (route: /tenant)
 import TenantDashboard from "./pages/tenant/TenantDashboard";
 
+// ✅ Import the Expenses page
+import ExpensesList from "./pages/expenses/ExpensesList";
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -43,6 +46,7 @@ export default function App() {
         {/* Protected routes (admin dashboard) */}
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
+
           <Route path="properties">
             <Route index element={<PropertyList />} />
             <Route path="create" element={<PropertyCreate />} />
@@ -73,6 +77,9 @@ export default function App() {
 
           <Route path="reports" element={<ReportsDashboard />} />
           <Route path="settings" element={<SettingsPage />} />
+
+          {/* ✅ New Expenses route */}
+          <Route path="expenses" element={<ExpensesList />} />
         </Route>
       </Routes>
     </BrowserRouter>
