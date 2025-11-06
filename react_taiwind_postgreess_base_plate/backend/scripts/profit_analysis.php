@@ -60,15 +60,17 @@ class ProfitAnalysisScript {
      */
     private function calculateIncome() {
         $sql = "SELECT 
-                    COALESCE(SUM(CASE WHEN payment_type = 'rent' THEN amount ELSE 0 END), 0) as rental_income,
-                    COALESCE(SUM(CASE WHEN payment_type != 'rent' THEN amount ELSE 0 END), 0) as other_income,
-                    COALESCE(SUM(amount), 0) as total_income
+                    COALESCE(SUM(CASE WHEN status IN ('early', 'late') THEN amount ELSE 0 END), 0) as completed_income,
+                    COALESCE(SUM(CASE WHEN status = 'incomplete' THEN amount ELSE 0 END), 0) as pending_income,
+                    COALESCE(SUM(CASE WHEN status IN ('early', 'late') THEN amount ELSE 0 END), 0) as total_income,
+                    COUNT(CASE WHEN status = 'early' THEN 1 END) as early_payments,
+                    COUNT(CASE WHEN status = 'late' THEN 1 END) as late_payments,
+                    COUNT(CASE WHEN status = 'incomplete' THEN 1 END) as incomplete_payments
                 FROM payments
-                WHERE payment_date BETWEEN :start_date AND :end_date
-                AND status = 'completed'";
+                WHERE date BETWEEN :start_date AND :end_date";
         
         if ($this->propertyId) {
-            $sql .= " AND property_id = :property_id";
+            $sql .= " AND property_ID = :property_id";
         }
 
         $stmt = $this->conn->prepare($sql);
@@ -84,20 +86,51 @@ class ProfitAnalysisScript {
     }
 
     /**
-     * Calculate expenses by category
+     * Get payment breakdown by payment method
+     */
+    private function getPaymentMethods() {
+        $sql = "SELECT 
+                    payment_information,
+                    COUNT(*) as count,
+                    SUM(amount) as total
+                FROM payments
+                WHERE date BETWEEN :start_date AND :end_date
+                AND status IN ('early', 'late')";
+        
+        if ($this->propertyId) {
+            $sql .= " AND property_ID = :property_id";
+        }
+
+        $sql .= " GROUP BY payment_information";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':start_date', $this->startDate);
+        $stmt->bindParam(':end_date', $this->endDate);
+        
+        if ($this->propertyId) {
+            $stmt->bindParam(':property_id', $this->propertyId);
+        }
+
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Calculate expenses by account/category
      */
     private function calculateExpenses() {
         $sql = "SELECT 
-                    category,
-                    COALESCE(SUM(amount), 0) as total
-                FROM property_expenses
-                WHERE expense_date BETWEEN :start_date AND :end_date";
+                    account,
+                    COALESCE(SUM(amount), 0) as total,
+                    COUNT(*) as count
+                FROM expenses
+                WHERE date BETWEEN :start_date AND :end_date";
         
         if ($this->propertyId) {
-            $sql .= " AND property_id = :property_id";
+            $sql .= " AND property_ID = :property_id";
         }
 
-        $sql .= " GROUP BY category ORDER BY total DESC";
+        $sql .= " GROUP BY account ORDER BY total DESC";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':start_date', $this->startDate);
@@ -115,7 +148,7 @@ class ProfitAnalysisScript {
      * Format currency
      */
     private function formatCurrency($amount) {
-        return '$' . number_format($amount, 2);
+        return 'KSh ' . number_format($amount, 2);
     }
 
     /**
@@ -130,34 +163,54 @@ class ProfitAnalysisScript {
      */
     public function generateReport() {
         echo "\n";
-        echo str_repeat('=', 70) . "\n";
-        echo "       PROPERTY PROFIT/LOSS ANALYSIS REPORT\n";
-        echo str_repeat('=', 70) . "\n";
+        echo str_repeat('=', 80) . "\n";
+        echo "              PROPERTY PROFIT/LOSS ANALYSIS REPORT\n";
+        echo str_repeat('=', 80) . "\n";
         
         // Report metadata
         $monthYear = date('M Y', strtotime($this->startDate));
         echo "Period: {$this->startDate} to {$this->endDate} ({$monthYear})\n";
         echo "Property ID: " . ($this->propertyId ? $this->propertyId : "All Properties") . "\n";
         echo "Generated: " . date('Y-m-d H:i:s') . "\n";
-        echo str_repeat('=', 70) . "\n\n";
+        echo str_repeat('=', 80) . "\n\n";
 
         // Calculate income
         $income = $this->calculateIncome();
         
-        echo "1. INCOME\n";
-        echo str_repeat('-', 70) . "\n";
-        echo "   Rental Income:              " . str_pad($this->formatCurrency($income['rental_income']), 15, ' ', STR_PAD_LEFT) . "\n";
-        echo "   Other Income:               " . str_pad($this->formatCurrency($income['other_income']), 15, ' ', STR_PAD_LEFT) . "\n";
-        echo "   " . str_repeat('-', 66) . "\n";
-        echo "   TOTAL INCOME:               " . str_pad($this->formatCurrency($income['total_income']), 15, ' ', STR_PAD_LEFT) . "\n";
+        echo "1. INCOME ANALYSIS\n";
+        echo str_repeat('-', 80) . "\n";
+        echo "   Completed Payments:         " . str_pad($this->formatCurrency($income['completed_income']), 20, ' ', STR_PAD_LEFT) . "\n";
+        echo "   Pending Payments:           " . str_pad($this->formatCurrency($income['pending_income']), 20, ' ', STR_PAD_LEFT) . "\n";
+        echo "   " . str_repeat('-', 76) . "\n";
+        echo "   TOTAL INCOME (Received):    " . str_pad($this->formatCurrency($income['total_income']), 20, ' ', STR_PAD_LEFT) . "\n";
+        echo "\n";
+
+        // Payment status breakdown
+        echo "   Payment Status Breakdown:\n";
+        echo "   - Early Payments:  " . $income['early_payments'] . " payments\n";
+        echo "   - Late Payments:   " . $income['late_payments'] . " payments\n";
+        echo "   - Incomplete:      " . $income['incomplete_payments'] . " payments\n";
+        echo "\n";
+
+        // Payment methods
+        $paymentMethods = $this->getPaymentMethods();
+        if (!empty($paymentMethods)) {
+            echo "   Payment Methods:\n";
+            foreach ($paymentMethods as $method) {
+                $methodName = $method['payment_information'] ?: 'Not specified';
+                echo "   - " . str_pad($methodName . ":", 25) . 
+                     str_pad($method['count'] . " payments", 15) . 
+                     $this->formatCurrency($method['total']) . "\n";
+            }
+        }
         echo "\n";
 
         // Calculate expenses
         $expenses = $this->calculateExpenses();
         $totalExpenses = 0;
 
-        echo "2. EXPENSES\n";
-        echo str_repeat('-', 70) . "\n";
+        echo "2. EXPENSES ANALYSIS\n";
+        echo str_repeat('-', 80) . "\n";
         
         if (empty($expenses)) {
             echo "   No expenses recorded for this period.\n";
@@ -166,12 +219,12 @@ class ProfitAnalysisScript {
                 $categoryName = $this->formatCategory($expense['category']);
                 $amount = (float)$expense['total'];
                 $totalExpenses += $amount;
-                echo "   " . str_pad($categoryName . ":", 32) . str_pad($this->formatCurrency($amount), 15, ' ', STR_PAD_LEFT) . "\n";
+                echo "   " . str_pad($categoryName . ":", 35) . str_pad($this->formatCurrency($amount), 20, ' ', STR_PAD_LEFT) . "\n";
             }
         }
         
-        echo "   " . str_repeat('-', 66) . "\n";
-        echo "   TOTAL EXPENSES:             " . str_pad($this->formatCurrency($totalExpenses), 15, ' ', STR_PAD_LEFT) . "\n";
+        echo "   " . str_repeat('-', 76) . "\n";
+        echo "   TOTAL EXPENSES:             " . str_pad($this->formatCurrency($totalExpenses), 20, ' ', STR_PAD_LEFT) . "\n";
         echo "\n";
 
         // Calculate net profit/loss
@@ -179,19 +232,25 @@ class ProfitAnalysisScript {
         $status = $netAmount >= 0 ? 'PROFIT' : 'LOSS';
         $statusSymbol = $netAmount >= 0 ? '✓' : '✗';
 
-        echo str_repeat('=', 70) . "\n";
-        echo "3. NET PROFIT/LOSS\n";
-        echo str_repeat('=', 70) . "\n";
-        echo "   Total Income:               " . str_pad($this->formatCurrency($income['total_income']), 15, ' ', STR_PAD_LEFT) . "\n";
-        echo "   Total Expenses:           - " . str_pad($this->formatCurrency($totalExpenses), 15, ' ', STR_PAD_LEFT) . "\n";
-        echo "   " . str_repeat('-', 66) . "\n";
-        echo "   NET {$status}:                " . str_pad($this->formatCurrency(abs($netAmount)), 15, ' ', STR_PAD_LEFT) . " {$statusSymbol}\n";
-        echo str_repeat('=', 70) . "\n";
+        echo str_repeat('=', 80) . "\n";
+        echo "3. NET PROFIT/LOSS SUMMARY\n";
+        echo str_repeat('=', 80) . "\n";
+        echo "   Total Income (Received):    " . str_pad($this->formatCurrency($income['total_income']), 20, ' ', STR_PAD_LEFT) . "\n";
+        echo "   Total Expenses:           - " . str_pad($this->formatCurrency($totalExpenses), 20, ' ', STR_PAD_LEFT) . "\n";
+        echo "   " . str_repeat('-', 76) . "\n";
+        echo "   NET {$status}:                " . str_pad($this->formatCurrency(abs($netAmount)), 20, ' ', STR_PAD_LEFT) . " {$statusSymbol}\n";
+        
+        // Show pending income separately
+        if ($income['pending_income'] > 0) {
+            echo "\n   Note: Pending/Incomplete:   " . str_pad($this->formatCurrency($income['pending_income']), 20, ' ', STR_PAD_LEFT) . " (not included)\n";
+        }
+        
+        echo str_repeat('=', 80) . "\n";
 
         // Summary metrics
         echo "\n";
-        echo "SUMMARY METRICS\n";
-        echo str_repeat('-', 70) . "\n";
+        echo "4. PERFORMANCE METRICS\n";
+        echo str_repeat('-', 80) . "\n";
         
         if ($income['total_income'] > 0) {
             $expenseRatio = ($totalExpenses / $income['total_income']) * 100;
@@ -199,18 +258,36 @@ class ProfitAnalysisScript {
             
             echo "   Expense Ratio:              " . number_format($expenseRatio, 2) . "%\n";
             echo "   Profit Margin:              " . number_format($profitMargin, 2) . "%\n";
+            
+            // Payment timeliness
+            $totalCompleted = $income['early_payments'] + $income['late_payments'];
+            if ($totalCompleted > 0) {
+                $onTimeRate = ($income['early_payments'] / $totalCompleted) * 100;
+                echo "   On-Time Payment Rate:       " . number_format($onTimeRate, 2) . "%\n";
+            }
+            
+            // Collection rate
+            $totalExpected = $income['total_income'] + $income['pending_income'];
+            if ($totalExpected > 0) {
+                $collectionRate = ($income['total_income'] / $totalExpected) * 100;
+                echo "   Collection Rate:            " . number_format($collectionRate, 2) . "%\n";
+            }
         } else {
             echo "   No income recorded - metrics unavailable\n";
         }
         
-        echo str_repeat('-', 70) . "\n\n";
+        echo str_repeat('-', 80) . "\n\n";
 
         // Return summary data
         return [
             'total_income' => $income['total_income'],
+            'pending_income' => $income['pending_income'],
             'total_expenses' => $totalExpenses,
             'net_profit_loss' => $netAmount,
-            'status' => $status
+            'status' => $status,
+            'early_payments' => $income['early_payments'],
+            'late_payments' => $income['late_payments'],
+            'incomplete_payments' => $income['incomplete_payments']
         ];
     }
 
