@@ -30,6 +30,7 @@ import TenantDashboard from "./pages/tenant/TenantDashboard";
 
 // ✅ Import the Expenses page
 import ExpensesList from "./pages/expenses/ExpensesList";
+import AddExpense from "./pages/expenses/AddExpense";
 
 export default function App() {
   return (
@@ -80,6 +81,7 @@ export default function App() {
 
           {/* ✅ New Expenses route */}
           <Route path="expenses" element={<ExpensesList />} />
+          <Route path="expenses/create" element={<AddExpense />} />
         </Route>
       </Routes>
     </BrowserRouter>
