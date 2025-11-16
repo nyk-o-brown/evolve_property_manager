@@ -1,0 +1,45 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # 1. Exclude the API folder from React Router rewrite
+  # This ensures calls to yourdomain.com/api/* go directly to the PHP files
+  RewriteRule ^api/ - [L]
+
+  # 2. Exclude all existing files and directories (like assets, favicon, etc.)
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+
+  # 3. All other requests are sent to the index.html file (for React Router)
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# CORS Headers Configuration
+<IfModule mod_headers.c>
+  # Allow requests from your domain (replace with your actual domain)
+  Header set Access-Control-Allow-Origin "https://yourdomain.com"
+  
+  # Allow specific HTTP methods
+  Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+  
+  # Allow specific headers
+  Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+  
+  # Allow credentials
+  Header set Access-Control-Allow-Credentials "true"
+</IfModule>
+
+# Security Headers (optional but recommended)
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Disable directory listing
+Options -Indexes
+
+# Enable Gzip compression for performance
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript
+</IfModule>

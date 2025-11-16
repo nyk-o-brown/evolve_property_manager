@@ -11,7 +11,7 @@ import {
   Calendar,
   HelpCircle,
   Wrench,
-  DollarSign,
+  
 } from "lucide-react";
 
 // You would get this from a theme context or state

@@ -1,0 +1,74 @@
+<?php
+/**
+ * Database Configuration for cPanel Deployment
+ * 
+ * IMPORTANT: Update these values with your cPanel database credentials
+ * Never commit this file with real credentials to version control
+ */
+
+class Database {
+    // ============================================
+    // UPDATE THESE WITH YOUR cPanel CREDENTIALS
+    // ============================================
+    private $host = 'localhost';                    // Usually 'localhost' for cPanel
+    private $database_name = 'yourusername_evolve';  // Your cPanel database name
+    private $username = 'yourusername_user';        // Your database username
+    private $password = 'your_password_here';       // Your database password
+    
+    private $conn;
+
+    /**
+     * Get database connection
+     * 
+     * @return PDO Database connection object
+     */
+    public function getConnection() {
+        $this->conn = null;
+
+        try {
+            $this->conn = new PDO(
+                "mysql:host=" . $this->host . ";dbname=" . $this->database_name,
+                $this->username,
+                $this->password,
+                array(
+                    PDO::ATTR_PERSISTENT => false,
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
+                )
+            );
+        } catch (PDOException $e) {
+            die(json_encode([
+                'status' => 'error',
+                'message' => 'Database Connection Error: ' . $e->getMessage()
+            ]));
+        }
+
+        return $this->conn;
+    }
+
+    /**
+     * Close database connection
+     */
+    public function closeConnection() {
+        $this->conn = null;
+    }
+}
+
+/**
+ * HOW TO FIND YOUR cPanel DATABASE CREDENTIALS:
+ * 
+ * 1. Log into cPanel
+ * 2. Find "MySQL Databases" 
+ * 3. You'll see your database name in the format: cpanelusername_databasename
+ * 4. Click "Edit Privileges" to see the database user
+ * 5. The password was set when you created the user (or can be reset)
+ * 6. Host is always "localhost" for cPanel
+ * 
+ * EXAMPLE VALUES:
+ * $host = 'localhost';
+ * $database_name = 'john_evolve';
+ * $username = 'john_evolve_user';
+ * $password = 'Y4mpA8Kx@9mZ2bQ1';
+ */
+?>
